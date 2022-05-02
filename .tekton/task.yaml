@@ -1,0 +1,69 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: branch-task
+spec:
+  params:
+    - name: repository
+      description: the git repository
+    - name: revision
+      description: the git repo branch 
+    - name: BRANCH
+      description: name of the BRANCH
+    - name: REPO
+      description: name of the repo
+    - name: ORG
+      description: name of the org
+    - name: continuous-delivery-context-secret
+      description: name of the configmap containing the continuous delivery pipeline context secrets
+      default: cd-secret
+  workspaces:
+    - name: task-pvc
+      mountPath: /artifacts  
+  steps:
+    - name: clone-repo
+      image: alpine/git
+      env:
+        - name: REPOSITORY
+          value: $(params.repository)
+        - name: REVISION
+          value: $(params.revision)
+        - name: GIT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: GIT_TOKEN
+      command: ["/bin/sh", "-c"]
+      args:
+        - set -e -o pipefail;
+          url="https://github.com/siriguppa/update.git" ; 
+           cd /workspace && git clone -q  $url .;
+           echo "Cloning $REPOSITORY";
+
+    - name: python
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-image:latest
+      env:
+        - name: REPOSITORY
+          value: $(params.repository)
+        - name: REVISION
+          value: $(params.revision)
+        - name: ORG
+          value: $(params.ORG)
+        - name: BRANCH
+          value: $(params.BRANCH)
+        - name: REPO
+          value: $(params.REPO)
+        - name: GIT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: GIT_TOKEN
+      command: ["/bin/bash", "-c"]
+      args:
+        - set -e -o pipefail;
+          cd /workspace;
+          apt-get -y update;
+          apt-get -y install python3;
+          apt-get -y install python3-pip;
+          pip3 install --no-cache-dir pygithub;
+          python3 18.py; 
