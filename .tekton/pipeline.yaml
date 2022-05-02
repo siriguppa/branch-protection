@@ -1,0 +1,37 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: branch-pipeline
+spec:
+  params:
+    - name: repository
+      description: the git repository
+    - name: revision
+      description: the git repo branch 
+    - name: BRANCH
+      description: name of the BRANCH
+    - name: REPO
+      description: name of the repo
+    - name: ORG
+      description: name of the org
+    
+  workspaces:
+    - name: pipeline-pvc
+  tasks:
+    - name: task
+      taskRef:
+        name: branch-task
+      params:        
+        - name: repository
+          value: $(params.repository)
+        - name: revision
+          value: $(params.revision) 
+        - name: ORG
+          value: $(params.ORG)
+        - name: BRANCH
+          value: $(params.BRANCH)
+        - name: REPO
+          value: $(params.REPO)
+      workspaces:
+        - name: task-pvc
+          workspace: pipeline-pvc
