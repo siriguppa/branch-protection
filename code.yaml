@@ -1,0 +1,40 @@
+import os
+from github import Github
+from pprint import pprint
+import sys
+                                                                  
+token = os.environ.get("GIT_TOKEN")
+ORG = os.environ.get("ORG")
+REPO = os.environ.get("REPO")                                                    
+BRANCH = os.environ.get("BRANCH")    
+
+
+repo_name = ORG + '/' + REPO
+
+g = Github(token,base_url="https://github.ibm.com/api/v3")
+ 
+                                               
+ 
+repo = g.get_repo(repo_name)
+
+branch = repo.get_branch(BRANCH)
+
+if branch.protected:
+              
+              print("organisation name is", ORG)
+              print("repository name is", repo_name,"and  branch name is", branch.name ,"protected and configured with branch protection rules")
+              
+              #print("Required status check is",branch.get_required_status_checks())
+              print("ADmin enforcement is",branch.get_admin_enforcement())
+              print("Team push restrictions is",branch.get_team_push_restrictions())
+              print("Pull requests reviews are",branch.get_required_pull_request_reviews())
+              print("Signatures are",branch.get_required_signatures())
+              print("push restrictions are",branch.get_user_push_restrictions())
+              repo.create_issue(title="  Body of the issue contains branch name which has protection rules enabled", body=BRANCH)
+              print("Issue is created for reviewing")
+              
+else:
+            print("organisation name is", ORG)
+            print("repository name is", repo_name,"and  branch name is", branch.name ,"unprotected and branch protection rules can be configured if required")
+            repo.create_issue(title="  Body of the issue contains branch name which has NO protection rules enabled", body=BRANCH)
+            print("Issue is created for reviewing")
